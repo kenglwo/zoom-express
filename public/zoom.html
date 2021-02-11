@@ -1,0 +1,50 @@
+<!DOCTYPE html5>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Ambient Meeting</title>
+    <!-- import #zmmtg-root css -->
+    <link type="text/css" rel="stylesheet" href="https://source.zoom.us/1.9.0/css/bootstrap.css" />
+    <link type="text/css" rel="stylesheet" href="https://source.zoom.us/1.9.0/css/react-select.css" />
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.1.js"></script> -->
+  </head>
+  <body>
+     <!-- import ZoomMtg dependencies -->
+    <script src="https://source.zoom.us/1.9.0/lib/vendor/react.min.js"></script>
+    <script src="https://source.zoom.us/1.9.0/lib/vendor/react-dom.min.js"></script>
+    <script src="https://source.zoom.us/1.9.0/lib/vendor/redux.min.js"></script>
+    <script src="https://source.zoom.us/1.9.0/lib/vendor/redux-thunk.min.js"></script>
+    <script src="https://source.zoom.us/1.9.0/lib/vendor/lodash.min.js"></script>
+
+     <!-- import ZoomMtg -->
+    <script src="https://source.zoom.us/zoom-meeting-1.9.0.min.js"></script>
+    <!-- import local .js file -->
+    <script src="./javascripts/zoom.js"></script>
+
+    <!-- <h1>Hi, test</h1> -->
+    <!-- <ul id="messages"></ul> -->
+    <!-- <form id="message_form" action="#">
+      <input id="input_msg" autocomplete="off" /><button>Send</button>
+    </form> -->
+    <!-- <script>
+      const socket = io();
+      socket.on('connect', () => {
+        console.log("Socket connected!!");
+      });
+
+      $(function(){
+          $('#message_form').submit(function(){
+            const value = $('#input_msg').val();
+            socket.emit('message', value);
+            $('#input_msg').val('');
+            return false;
+          });
+          socket.on('message',function(msg){
+            $('#messages').append($('<li>').text(msg));
+          });
+        });
+    </script> -->
+  </body>
+</html>
