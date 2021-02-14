@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import datetime
+import pprint
 
 # Copyright 2019 Google LLC
 #
@@ -199,7 +201,7 @@ def listen_print_loop(responses, stream):
         if not result.alternatives:
             continue
 
-        transcript = result.alternatives[0].transcript
+        transcript = result.alternatives[0].transcript.strip()
 
         result_seconds = 0
         result_micros = 0
@@ -229,49 +231,65 @@ def listen_print_loop(responses, stream):
             stream.is_final_end_time = stream.result_end_time
             stream.last_transcript_was_final = True
 
-            #TODO: send transcript to sentiment analysis on Google cloud platform
-            # transcript
-            # stream.is_final_end_time
+            print("elapsed seconds", result_seconds, "s")
 
-            word_info = str(list(result.alternatives[0].words)[0])
-            match = re.search(r'speaker_tag: \d', word_info)
-            speaker_tag = match.group().split(':')[-1].strip()
-            print(speaker_tag)
-            print('++++++++++++++++++++++++++')
-            # speaker_tag = result.alternatives[0].words[0]['speaker_tag'] if result.alternatives[0] is not None else None
-            # print(speaker_tag)
+            elapsed_time_start = 0
+            elapsed_time_end = 0
+            duration = 0
 
-            # Instantiates a client
-            client = language_v1.LanguageServiceClient()
-            # The text to analyze
-            document = language_v1.Document(content=transcript, type_=language_v1.Document.Type.PLAIN_TEXT)
-            # Detects the sentiment of the text
-            sentiment = client.analyze_sentiment(request={'document': document}).document_sentiment
+            if len(list(result.alternatives[0].words)) > 0:
+                first_word_info = str(list(result.alternatives[0].words)[0])
+                last_word_info = str(list(result.alternatives[0].words)[-1])
 
-            print("Text: {}".format(transcript))
-            print("Sentiment: {}, {}".format(sentiment.score, sentiment.magnitude))
+                first_match = re.search(r'seconds: .*', first_word_info)
+                elapsed_time_start = int(first_match.group().split(':')[-1].strip())
 
-            payload = {
-                "speech_text": {
+                last_match = re.search(r'seconds: .*', last_word_info)
+                elapsed_time_end = int(last_match.group().split(':')[-1].strip())
+
+                duration = elapsed_time_end - elapsed_time_start
+
+                # print('++++++++++++++++++++++++++')
+                # speaker_tag = result.alternatives[0].words[0]['speaker_tag'] if result.alternatives[0] is not None else None
+                # print(speaker_tag)
+
+
+                # Instantiates a client
+                client = language_v1.LanguageServiceClient()
+                # The text to analyze
+                document = language_v1.Document(content=transcript, type_=language_v1.Document.Type.PLAIN_TEXT)
+                # Detects the sentiment of the text
+                sentiment = client.analyze_sentiment(request={'document': document}).document_sentiment
+
+                # print("Text: {}".format(transcript))
+                # print("Sentiment: {}, {}".format(sentiment.score, sentiment.magnitude))
+
+                word_count = len(transcript.split(" "))
+                timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                payload = {
                     "transcript": transcript,
-                    "end_time": stream.is_final_end_time,
+                    "word_count": word_count,
+                    "elapsed_time_start": elapsed_time_start,
+                    "elapsed_time_end": elapsed_time_end,
+                    "speak_duration": duration,
                     "sentiment_score": sentiment.score,
                     "sentiment_magnitude": sentiment.magnitude,
-                    "speaker_tag": speaker_tag
+                    "timestamp": timestamp
                 }
-            }
-            url = "http://localhost:3000/api/zoom/speech_text"
+                pprint.pprint(payload)
 
-            if (not transcript == ''):
+                url = "http://localhost:3000/api/zoom/speech_text"
+
                 r = requests.post(url, json=payload)
 
-            # Exit recognition if any of the transcribed phrases could be
-            # one of our keywords.
-            if re.search(r"\b(exit|quit)\b", transcript, re.I):
-                sys.stdout.write(YELLOW)
-                sys.stdout.write("Exiting...\n")
-                stream.closed = True
-                break
+                # Exit recognition if any of the transcribed phrases could be
+                # one of our keywords.
+                if re.search(r"\b(exit|quit)\b", transcript, re.I):
+                    sys.stdout.write(YELLOW)
+                    sys.stdout.write("Exiting...\n")
+                    stream.closed = True
+                    break
 
         else:
             sys.stdout.write(RED)
@@ -284,11 +302,11 @@ def listen_print_loop(responses, stream):
 def main():
     """start bidirectional streaming from microphone input to speech API"""
 
-    diarization_config = {
-        "enable_speaker_diarization": True,
-        "min_speaker_count": 1,
-        "max_speaker_count": 6,
-    }
+    # diarization_config = {
+    #     "enable_speaker_diarization": True,
+    #     "min_speaker_count": 1,
+    #     "max_speaker_count": 6,
+    # }
 
     client = speech.SpeechClient()
     config = speech.RecognitionConfig(
@@ -299,8 +317,8 @@ def main():
         enable_word_time_offsets=True,
         use_enhanced=True,
         model="video",
-        diarization_config=diarization_config,
     )
+        # diarization_config=diarization_config,
 
     streaming_config = speech.StreamingRecognitionConfig(
         config=config,
