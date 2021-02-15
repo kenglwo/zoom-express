@@ -16,7 +16,9 @@ app.use(function(req, res, next) {
 
 const indexRouter = require('./routes/index');
 // const zoomSpeechTextRouter = require('./routes/zoom/speech_text')(app.io);
+const zoomRecogStartRouter = require('./routes/zoom/recog_start');
 const zoomSpeechTextRouter = require('./routes/zoom/speech_text');
+const zoomSpeechWordsRouter = require('./routes/zoom/speech_words');
 const zoomAttendeesListRouter = require('./routes/zoom/attendees_list');
 const zoomActiveSpeakerRouter = require('./routes/zoom/active_speaker');
 const zoomMeetingEndRouter = require('./routes/zoom/meeting_end');
@@ -35,7 +37,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 app.use('/', indexRouter);
+app.use('/api/zoom/recog_start', zoomRecogStartRouter);
 app.use('/api/zoom/speech_text', zoomSpeechTextRouter);
+app.use('/api/zoom/speech_words', zoomSpeechWordsRouter);
 app.use('/api/zoom/attendees_list', zoomAttendeesListRouter);
 app.use('/api/zoom/active_speaker', zoomActiveSpeakerRouter);
 app.use('/api/zoom/meeting_end', zoomMeetingEndRouter);
