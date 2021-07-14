@@ -49,8 +49,6 @@ router.post('/', function(req, res) {
         const result = await client.query(fetchLatestMeeting);
         const meetingID = result.rows[0].meeting_id;
         const datetimeStart = result.rows[0].datetime_start;
-        console.log(meetingID);
-        console.log(datetimeStart);
 
         await client.query(recogStartUpdate, [recogStart, meetingID, datetimeStart])
 

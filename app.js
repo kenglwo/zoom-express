@@ -17,12 +17,15 @@ app.use(function(req, res, next) {
 const indexRouter = require('./routes/index');
 // const zoomSpeechTextRouter = require('./routes/zoom/speech_text')(app.io);
 const zoomRecogStartRouter = require('./routes/zoom/recog_start');
-const zoomSpeechTextRouter = require('./routes/zoom/speech_text');
+// const zoomSpeechTextRouter = require('./routes/zoom/speech_text');
 const zoomSpeechWordsRouter = require('./routes/zoom/speech_words');
 const zoomAttendeesListRouter = require('./routes/zoom/attendees_list');
 const zoomActiveSpeakerRouter = require('./routes/zoom/active_speaker');
 const zoomMeetingEndRouter = require('./routes/zoom/meeting_end');
-// const signatureRouter = require('./routes/signature');
+
+const blenderAttendeesInfoRouter = require('./routes/blender/get_attendees_info');
+
+const testRouter = require('./routes/test');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -38,12 +41,15 @@ app.use(bodyParser.json());
 
 app.use('/', indexRouter);
 app.use('/api/zoom/recog_start', zoomRecogStartRouter);
-app.use('/api/zoom/speech_text', zoomSpeechTextRouter);
+// app.use('/api/zoom/speech_text', zoomSpeechTextRouter);
 app.use('/api/zoom/speech_words', zoomSpeechWordsRouter);
 app.use('/api/zoom/attendees_list', zoomAttendeesListRouter);
 app.use('/api/zoom/active_speaker', zoomActiveSpeakerRouter);
 app.use('/api/zoom/meeting_end', zoomMeetingEndRouter);
-// app.use('/api/signature', signatureRouter);
+
+app.use('/api/blender/get_attendees_info', blenderAttendeesInfoRouter);
+
+app.use('/api/test', testRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

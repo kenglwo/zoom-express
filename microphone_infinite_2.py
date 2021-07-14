@@ -1,20 +1,49 @@
+#!/usr/bin/env python
+import datetime
+import pprint
+
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Google Cloud Speech API sample application using the streaming API.
+
+NOTE: This module requires the dependencies `pyaudio` and `termcolor`.
+To install using pip:
+
+    pip install pyaudio
+    pip install termcolor
+
+Example usage:
+    python transcribe_streaming_infinite.py
+"""
+
+# $env:GOOGLE_APPLICATION_CREDENTIALS="C:\Users\mars\Desktop\ambient-meeting\ambient-meeting-b4b55b07ce3e.json"
+# $env:GOOGLE_APPLICATION_CREDENTIALS="C:\Users\mars\Github\zoom-express\ambient-meeting-b4b55b07ce3e.json"
+# [START speech_transcribe_infinite_streaming]
+
 import re
 import sys
 import time
 import os
 import requests
-import datetime
-import pprint
-import json
 
 from google.cloud import speech
 import pyaudio
 from six.moves import queue
 from google.cloud import language_v1
 
-# $env:GOOGLE_APPLICATION_CREDENTIALS="C:\Users\mars\Desktop\ambient-meeting\ambient-meeting-b4b55b07ce3e.json"
 
-# [START speech_transcribe_infinite_streaming]
 # Audio recording parameters
 STREAMING_LIMIT = 240000  # 4 minutes
 SAMPLE_RATE = 16000
@@ -213,6 +242,8 @@ def listen_print_loop(responses, stream):
                 last_word_info = str(list(result.alternatives[0].words)[-1])
 
                 first_match = re.search(r'seconds: .*', first_word_info)
+                print(first_word_info)
+                print(first_match)
                 elapsed_time_start = int(first_match.group().split(':')[-1].strip())
 
                 last_match = re.search(r'seconds: .*', last_word_info)
@@ -225,10 +256,12 @@ def listen_print_loop(responses, stream):
                 # print(speaker_tag)
 
 
-                # sentiment analysis
-                # client = language_v1.LanguageServiceClient()
-                # document = language_v1.Document(content=transcript, type_=language_v1.Document.Type.PLAIN_TEXT)
-                # sentiment = client.analyze_sentiment(request={'document': document}).document_sentiment
+                # Instantiates a client
+                client = language_v1.LanguageServiceClient()
+                # The text to analyze
+                document = language_v1.Document(content=transcript, type_=language_v1.Document.Type.PLAIN_TEXT)
+                # Detects the sentiment of the text
+                sentiment = client.analyze_sentiment(request={'document': document}).document_sentiment
 
                 # print("Text: {}".format(transcript))
                 # print("Sentiment: {}, {}".format(sentiment.score, sentiment.magnitude))
@@ -236,44 +269,21 @@ def listen_print_loop(responses, stream):
                 word_count = len(transcript.split(" "))
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                # payload = {
-                #     "transcript": transcript,
-                #     "word_count": word_count,
-                #     "elapsed_time_start": elapsed_time_start,
-                #     "elapsed_time_end": elapsed_time_end,
-                #     "speak_duration": duration,
-                #     "sentiment_score": sentiment.score,
-                #     "sentiment_magnitude": sentiment.magnitude,
-                #     "timestamp": timestamp
-                # }
-                # pprint.pprint(payload)
+                payload = {
+                    "transcript": transcript,
+                    "word_count": word_count,
+                    "elapsed_time_start": elapsed_time_start,
+                    "elapsed_time_end": elapsed_time_end,
+                    "speak_duration": duration,
+                    "sentiment_score": round(sentiment.score, 2),
+                    "sentiment_magnitude": round(sentiment.magnitude, 2),
+                    "timestamp": timestamp
+                }
+                pprint.pprint(payload)
 
-                # url = "http://localhost:3000/api/zoom/speech_text"
-                # r = requests.post(url, json=payload)
+                url = "http://localhost:3000/api/zoom/speech_text"
 
-                # TODO: send chunk to the server
-                words_array = []
-                alternative = result.alternatives[0]
-                # print(alternative.transcript)
-                for word_info in alternative.words:
-                    word = word_info.word
-                    start_time = word_info.start_time.total_seconds()
-                    end_time = word_info.end_time.total_seconds()
-
-                    # print(
-                    #     f"Word: {word}, start_time: {start_time.total_seconds()}, end_time: {end_time.total_seconds()}"
-                    # )
-                    word_info = {
-                        "word": word,
-                        "offset_time_start": start_time,
-                        "offset_time_end": end_time
-                    }
-                    words_array.append(word_info)
-
-                # pprint.pprint(words_array)
-                words = { "words": words_array }
-                url = "http://localhost:3000/api/zoom/speech_words"
-                r = requests.post(url, json=words)
+                r = requests.post(url, json=payload)
 
                 # Exit recognition if any of the transcribed phrases could be
                 # one of our keywords.
@@ -293,7 +303,6 @@ def listen_print_loop(responses, stream):
 
 def main():
     """start bidirectional streaming from microphone input to speech API"""
-
 
     # diarization_config = {
     #     "enable_speaker_diarization": True,
@@ -321,8 +330,6 @@ def main():
 
     mic_manager = ResumableMicrophoneStream(SAMPLE_RATE, CHUNK_SIZE)
     print(mic_manager.chunk_size)
-
- 
     sys.stdout.write(YELLOW)
     sys.stdout.write('\nListening, say "Quit" or "Exit" to stop.\n\n')
     sys.stdout.write("End (ms)       Transcript Results/Status\n")
@@ -364,12 +371,6 @@ def main():
 
 if __name__ == "__main__":
 
-    # send start time to the server
-    recognition_start = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    print(recognition_start)
-    url = "http://localhost:3000/api/zoom/recog_start"
-    obj = { "recog_start": recognition_start }
-    r = requests.post(url, json=obj)
     main()
 
 # [END speech_transcribe_infinite_streaming]
