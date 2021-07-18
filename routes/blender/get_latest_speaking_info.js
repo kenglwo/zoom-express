@@ -18,20 +18,22 @@ pool.on('error', (err, client) => {
 router.get('/', function(req, res) {
 
     const fetchLatestSpeakingInfo = `
-      select 
-        meeting_id,
-        to_char(datetime_start, 'YYYY-MM-DD HH24:MI:SS') as datetime_start,
-        attendee_id,
-        attendee_name,
-        is_host
-      from 
-        attendee_info
-      where datetime_start = (
-        select 
-          max(datetime_start)
-        from
-          attendee_info
-      );
+    select
+      datetime_start,
+      active_at_offset,
+      attendee_name,
+      word_count,
+      speak_duration,
+      sentiment_score,
+      sentiment_magnitude
+    from
+      attendee_speaking_data2
+    -- where
+    -- 	active_at > now() + '-1 minutes' 
+    order by
+      datetime_start desc, active_at desc
+    limit 5
+    ; 
     `;
 
     (async () => {

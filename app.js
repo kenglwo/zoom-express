@@ -24,6 +24,7 @@ const zoomActiveSpeakerRouter = require('./routes/zoom/active_speaker');
 const zoomMeetingEndRouter = require('./routes/zoom/meeting_end');
 
 const blenderAttendeesInfoRouter = require('./routes/blender/get_attendees_info');
+const blenderGetLatestSpeakingInfoRouter = require('./routes/blender/get_latest_speaking_info');
 
 const testRouter = require('./routes/test');
 
@@ -48,6 +49,7 @@ app.use('/api/zoom/active_speaker', zoomActiveSpeakerRouter);
 app.use('/api/zoom/meeting_end', zoomMeetingEndRouter);
 
 app.use('/api/blender/get_attendees_info', blenderAttendeesInfoRouter);
+app.use('/api/blender/get_latest_speaking_info', blenderGetLatestSpeakingInfoRouter);
 
 app.use('/api/test', testRouter);
 
