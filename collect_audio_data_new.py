@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 import datetime
 import pprint
-from google.protobuf.json_format import MessageToDict
-# from protobuf_to_dict import protobuf_to_dict
-
 
 # Copyright 2019 Google LLC
 #
@@ -225,7 +222,6 @@ def listen_print_loop(responses, stream):
         # line, so subsequent lines will overwrite them.
 
         if result.is_final:
-
             sys.stdout.write(GREEN)
             sys.stdout.write("\033[K")
             sys.stdout.write(str(corrected_time) + ": " + transcript + "\n")
@@ -233,52 +229,9 @@ def listen_print_loop(responses, stream):
             stream.is_final_end_time = stream.result_end_time
             stream.last_transcript_was_final = True
 
-            # print("elapsed seconds", result_seconds, "s")
-
-            elapsed_time_start = 0
-            elapsed_time_end = 0
-            duration = 0
-
             if len(list(result.alternatives[0].words)) > 0:
 
-                # first_word_info = str(list(result.alternatives[0].words)[0])
-                # last_word_info = str(list(result.alternatives[0].words)[-1])
-
-                # first_match = re.search(r'seconds: .*', first_word_info)
-                # print(first_word_info)
-                # print(first_match)
-                # elapsed_time_start = int(first_match.group().split(':')[-1].strip())
-
-                # last_match = re.search(r'seconds: .*', last_word_info)
-                # elapsed_time_end = int(last_match.group().split(':')[-1].strip())
-
-                # duration = elapsed_time_end - elapsed_time_start
-
-                # Instantiates a client
-                # client = language_v1.LanguageServiceClient()
-                # The text to analyze
-                # document = language_v1.Document(content=transcript, type_=language_v1.Document.Type.PLAIN_TEXT)
-                # Detects the sentiment of the text
-                # sentiment = client.analyze_sentiment(request={'document': document}).document_sentiment
-
-                # word_count = len(transcript.split(" "))
-                # timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-                # payload = {
-                #     "transcript": transcript,
-                #     "word_count": word_count,
-                #     "elapsed_time_start": elapsed_time_start,
-                #     "elapsed_time_end": elapsed_time_end,
-                #     "speak_duration": duration,
-                #     "sentiment_score": round(sentiment.score, 2),
-                #     "sentiment_magnitude": round(sentiment.magnitude, 2),
-                #     "timestamp": timestamp
-                # }
-                # pprint.pprint(payload)
-
-                # url = "http://localhost:3000/api/zoom/speech_text"
                 url = "http://localhost:3000/api/zoom/speech_words"
-                # words = MessageToJson(result.alternatives[0].words)
                 words = result.alternatives[0].words
                 words_json = []
                 for word in words:
@@ -294,11 +247,11 @@ def listen_print_loop(responses, stream):
 
                 # Exit recognition if any of the transcribed phrases could be
                 # one of our keywords.
-                if re.search(r"\b(exit|quit)\b", transcript, re.I):
-                    sys.stdout.write(YELLOW)
-                    sys.stdout.write("Exiting...\n")
-                    stream.closed = True
-                    break
+                # if re.search(r"\b(exit|quit)\b", transcript, re.I):
+                #     sys.stdout.write(YELLOW)
+                #     sys.stdout.write("Exiting...\n")
+                #     stream.closed = True
+                #     break
 
         else:
             sys.stdout.write(RED)
