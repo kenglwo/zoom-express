@@ -1,6 +1,16 @@
 #!/usr/bin/env python
+import re
+import sys
+import time
+import os
 import datetime
 import pprint
+import requests
+
+from google.cloud import speech
+import pyaudio
+from six.moves import queue
+from google.cloud import language_v1
 
 # Copyright 2019 Google LLC
 #
@@ -31,16 +41,6 @@ Example usage:
 # $env:GOOGLE_APPLICATION_CREDENTIALS="C:\Users\mars\Github\zoom-express\ambient-meeting-b4b55b07ce3e.json"
 # [START speech_transcribe_infinite_streaming]
 
-import re
-import sys
-import time
-import os
-import requests
-
-from google.cloud import speech
-import pyaudio
-from six.moves import queue
-from google.cloud import language_v1
 
 
 # Audio recording parameters
@@ -287,6 +287,16 @@ def main():
         interim_results=True,
         single_utterance=False
     )
+
+    # send data of the start of the speech recognition
+    import requests
+    url = "http://localhost:3000/api/zoom/recog_start"
+    now = datetime.datetime.now()
+    recog_start = now.strftime('%Y-%m-%d %H:%M:%S')
+    data = {
+        "recog_start": recog_start
+    }
+    res = requests.post(url, json=data)
 
     mic_manager = ResumableMicrophoneStream(SAMPLE_RATE, CHUNK_SIZE)
     print(mic_manager.chunk_size)
