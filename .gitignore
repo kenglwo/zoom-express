@@ -102,3 +102,6 @@ dist
 
 # TernJS port file
 .tern-port
+
+# credential file for Google Cloud
+ambient-meeting-b4b55b07ce3e.json
