@@ -105,3 +105,5 @@ dist
 
 # credential file for Google Cloud
 ambient-meeting-b4b55b07ce3e.json
+
+/routes/test.js
