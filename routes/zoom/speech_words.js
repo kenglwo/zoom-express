@@ -23,7 +23,8 @@ const fetchLatestMeeting = `
     datetime_start_recog
   from
     meeting_info
-  order by datetime_start_recog desc
+  order by 
+    datetime_start desc
   limit 1
 `
 // TODO: insert into speech_words
@@ -38,7 +39,8 @@ const insertSpeechWords = `
 `
 
 router.post('/', function(req, res) {
-  const words = req.body.words;
+  // const words = req.body.words;
+  const words = req.body;
 
   (async () => {
     const client = await pool.connect();

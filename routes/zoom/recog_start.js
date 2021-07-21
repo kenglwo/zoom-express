@@ -18,10 +18,7 @@ pool.on('error', (err, client) => {
 
 
 router.post('/', function(req, res) {
-  console.log(req.body);
   const recogStart = req.body.recog_start;
-  console.log(`recogStart: ${recogStart}`);
-
 
   const fetchLatestMeeting = `
     select

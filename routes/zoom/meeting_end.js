@@ -51,13 +51,12 @@ router.post('/', function(req, res) {
           const duration = (datetimeEnd - datetimeStart) / 1000; // seconds
 
           const meetingInfo = [datetimeEnd, duration, meetingID, datetimeStart];
-          console.log(meetingInfo);
           await client.query(updateMeetingInfo, meetingInfo);
       } finally {
         client.release();
       }
 
-      res.send("API success: speech_text")
+      // res.send("API success: speech_text")
     })().catch(e => console.log(e.stack));
 
     // res.send('API Success: meeting_end');
