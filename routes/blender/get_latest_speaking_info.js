@@ -18,23 +18,36 @@ pool.on('error', (err, client) => {
 router.get('/', function(req, res) {
   const update_interval_seconds = req.query.update_interval_seconds;
 
+  // const fetchLatestSpeakingInfo = `
+  //   select
+  //     attendee_name,
+  //     word_count,
+  //     speak_duration,
+  //     sentiment_score,
+  //     sentiment_magnitude
+  //   from
+  //     attendee_speaking_data2
+  //   where
+  //   	active_at > now() - interval '${update_interval_seconds} seconds' 
+  //   order by
+  //     active_at desc
+  //   limit 5
+  // `;
+
   const fetchLatestSpeakingInfo = `
     select
-      datetime_start,
-      active_at_offset,
       attendee_name,
-      word_count,
-      speak_duration,
-      sentiment_score,
-      sentiment_magnitude
+      sum(word_count) as word_count_sum,
+      sum(speak_duration) as speak_duration_sum,
+      avg(sentiment_score) as sentiment_score_avg,
+      avg(sentiment_magnitude) as sentiment_magnitude_avg
     from
       attendee_speaking_data2
     where
     	active_at > now() - interval '${update_interval_seconds} seconds' 
-    order by
-      datetime_start desc, active_at desc
+    group by 
+      attendee_name
     limit 5
-    ; 
   `;
 
   (async () => {
@@ -43,6 +56,7 @@ router.get('/', function(req, res) {
     try {
         const result = await client.query(fetchLatestSpeakingInfo);
         const output = result.rows.filter(d => (d.word_count !== null));
+        console.log(output)
         res.json(result.rows);
     } finally {
       client.release();
