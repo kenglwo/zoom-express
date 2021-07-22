@@ -37,16 +37,39 @@ router.post('/', function(req, res) {
     (async () => {
       const client = await pool.connect();
 
-      const insertMeetingInfo = 'insert into meeting_info(meeting_id, datetime_start, attendees_num) values($1, $2, $3)'
+      const insertMeetingInfo = `
+        insert into meeting_info(
+          meeting_id, 
+          datetime_start,
+          attendees_num
+        ) values($1, $2, $3)`
       const meetingInfo = [meeting_id, datetime_start, attendees_num]
-      const insertAttendeeInfo = 'insert into attendee_info(meeting_id, datetime_start, attendee_id, attendee_name, is_host) values($1, $2, $3, $4, $5)'
+      const insertAttendeeInfo = `
+        insert into attendee_info(
+          meeting_id,
+          datetime_start,
+          attendee_id,
+          attendee_name,
+          is_host) values($1, $2, $3, $4, $5)`
+      const initializeBlenderObjectsStatus = `
+        insert into blender_objects_status(
+          meeting_id,
+          datetime_start,
+          attendee_name,
+          jellyfish_tentacles_num,
+          jellyfish_tentacles_length,
+          stage_animation_path,
+          stage_bottom_texture,
+          num_corals) values($1, $2, $3, $4, $5, $6, $7, $8)`
 
       try {
           await client.query(insertMeetingInfo, meetingInfo)
-          atteendeesListInfo.forEach(attendee => {
+          atteendeesListInfo.forEach(d => {
             (async () => {
-              const attendeeInfo = [meeting_id, datetime_start, attendee.attendee_id, attendee.attendee_name, attendee.is_host]
+              const attendeeInfo = [meeting_id, datetime_start, d.attendee_id, d.attendee_name, d.is_host]
               await client.query(insertAttendeeInfo, attendeeInfo)
+              const blenderObjectsStatus = [meeting_id, datetime_start, d.attendee_name, 0, 0.0, 0, 0, 0]
+              await client.query(initializeBlenderObjectsStatus, blenderObjectsStatus)
             })().catch(e => console.log(e.stack))
           })
       } finally {

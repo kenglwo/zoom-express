@@ -18,22 +18,6 @@ pool.on('error', (err, client) => {
 router.get('/', function(req, res) {
   const update_interval_seconds = req.query.update_interval_seconds;
 
-  // const fetchLatestSpeakingInfo = `
-  //   select
-  //     attendee_name,
-  //     word_count,
-  //     speak_duration,
-  //     sentiment_score,
-  //     sentiment_magnitude
-  //   from
-  //     attendee_speaking_data2
-  //   where
-  //   	active_at > now() - interval '${update_interval_seconds} seconds' 
-  //   order by
-  //     active_at desc
-  //   limit 5
-  // `;
-
   const fetchLatestSpeakingInfo = `
     select
       attendee_name,
