@@ -16,8 +16,9 @@ pool.on('error', (err, client) => {
 });
 
 router.get('/', function(req, res) {
+  const update_interval_seconds = req.query.update_interval_seconds;
 
-    const fetchLatestSpeakingInfo = `
+  const fetchLatestSpeakingInfo = `
     select
       datetime_start,
       active_at_offset,
@@ -28,26 +29,26 @@ router.get('/', function(req, res) {
       sentiment_magnitude
     from
       attendee_speaking_data2
-    -- where
-    -- 	active_at > now() + '-1 minutes' 
+    where
+    	active_at > now() - interval '${update_interval_seconds} seconds' 
     order by
       datetime_start desc, active_at desc
     limit 5
     ; 
-    `;
+  `;
 
-    (async () => {
-      const client = await pool.connect();
-      // let api_output = [];
-      try {
-          const result = await client.query(fetchLatestSpeakingInfo);
-          console.log(result.rows)
-          res.json(result.rows)
-      } finally {
-        client.release();
-      }
+  (async () => {
+    const client = await pool.connect();
+    const param = [update_interval_seconds];
+    try {
+        const result = await client.query(fetchLatestSpeakingInfo);
+        const output = result.rows.filter(d => (d.word_count !== null));
+        res.json(result.rows);
+    } finally {
+      client.release();
+    }
 
-    })().catch(e => console.log(e.stack));
+  })().catch(e => console.log(e.stack));
 });
 
 module.exports = router;
