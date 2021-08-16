@@ -6,11 +6,13 @@ import os
 import datetime
 import pprint
 import requests
-
-from google.cloud import speech
 import pyaudio
 from six.moves import queue
+
+from google.cloud import speech
+from google.cloud import speech_v1p1beta1
 from google.cloud import language_v1
+
 
 # Copyright 2019 Google LLC
 #
@@ -41,8 +43,6 @@ Example usage:
 # $env:GOOGLE_APPLICATION_CREDENTIALS="C:\Users\mars\Github\zoom-express\ambient-meeting-b4b55b07ce3e.json"
 # [START speech_transcribe_infinite_streaming]
 
-
-
 # Audio recording parameters
 STREAMING_LIMIT = 240000  # 4 minutes
 SAMPLE_RATE = 16000
@@ -52,6 +52,8 @@ RED = "\033[0;31m"
 GREEN = "\033[0;32m"
 YELLOW = "\033[0;33m"
 
+offset_time_start = time.time()
+new_connection_index = -1 
 
 def get_current_time():
     """Return Current Time in MS."""
@@ -169,7 +171,7 @@ class ResumableMicrophoneStream:
             yield b"".join(data)
 
 
-def listen_print_loop(responses, stream):
+def listen_print_loop(responses, stream, new_connection_index):
     """Iterates through server responses and prints them.
 
     The responses passed is a generator that will block until a response
@@ -234,15 +236,38 @@ def listen_print_loop(responses, stream):
                 url = "http://localhost:3000/api/zoom/speech_words"
                 words = result.alternatives[0].words
                 words_json = []
-                for word in words:
+                offset_time_now = time.time()
+                offset_time_elasped = round(( offset_time_now - offset_time_start )/10, 1)
+                for i, word in enumerate(words):
+                    start = word.start_time.total_seconds() 
+                    end = word.end_time.total_seconds() 
+
+                    start2 = start + new_connection_index * 240 if new_connection_index > 0 else start
+                    end2 = end + new_connection_index * 240 if new_connection_index > 0 else start
+
+
+                    # data = {
+                    #     "word": word.word,
+                    #     "offset_time_start": start,
+                    #     "offset_time_end": end
+                    # }
                     data = {
                         "word": word.word,
-                        "offset_time_start": word.start_time.total_seconds(),
-                        "offset_time_end": word.end_time.total_seconds()
+                        "offset_time_start": start2,
+                        "offset_time_end": end2
                     }
-                    words_json.append(data)
+                    # data = {
+                    #     "word": word.word,
+                    #     "offset_time_start": offset_time_elasped + i/100,
+                    #     "offset_time_end": offset_time_elasped + i/100
+                    # }
 
-                print(words_json)
+                    words_json.append(data)
+                    # print("word: {}, offset_time_start: {}, ?_offset: {}, true_offset: {}".format(word.word, offset_time_start, offset_time_elasped, word.start_time.total_seconds() ))
+                    # print("word: {}, true_offset: {}, ?_offset: {}".format(word.word, data["offset_time_start"], ))
+                    print("word: {}, true_offset: {}, ?_offset: {}".format(word.word, start, start2))
+
+                # print(words_json)
                 res = requests.post(url, json=words_json)
 
                 # Exit recognition if any of the transcribed phrases could be
@@ -261,7 +286,7 @@ def listen_print_loop(responses, stream):
             stream.last_transcript_was_final = False
 
 
-def main():
+def main(new_connection_index):
     """start bidirectional streaming from microphone input to speech API"""
 
     # diarization_config = {
@@ -270,19 +295,21 @@ def main():
     #     "max_speaker_count": 6,
     # }
 
-    client = speech.SpeechClient()
-    config = speech.RecognitionConfig(
-        encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+    # alternative_language_codes = ['zh'],
+    client = speech_v1p1beta1.SpeechClient()
+    config = speech_v1p1beta1.RecognitionConfig(
+        encoding=speech_v1p1beta1.RecognitionConfig.AudioEncoding.LINEAR16,
         sample_rate_hertz=SAMPLE_RATE,
         language_code="en-US",
         max_alternatives=1,
         enable_word_time_offsets=True,
         use_enhanced=True,
-        model="video",
+        model="default",
     )
+        # model="video",
         # diarization_config=diarization_config,
 
-    streaming_config = speech.StreamingRecognitionConfig(
+    streaming_config = speech_v1p1beta1.StreamingRecognitionConfig(
         config=config,
         interim_results=True,
         single_utterance=False
@@ -293,6 +320,7 @@ def main():
     url = "http://localhost:3000/api/zoom/recog_start"
     now = datetime.datetime.now()
     recog_start = now.strftime('%Y-%m-%d %H:%M:%S')
+    offset_time_start = time.time()
     data = {
         "recog_start": recog_start
     }
@@ -308,23 +336,25 @@ def main():
     with mic_manager as stream:
 
         while not stream.closed:
+            new_connection_index += 1
             sys.stdout.write(YELLOW)
             sys.stdout.write(
                 "\n" + str(STREAMING_LIMIT * stream.restart_counter) + ": NEW REQUEST\n"
             )
+            print("#### new_connection_index: {}".format(new_connection_index))
 
             stream.audio_input = []
             audio_generator = stream.generator()
 
             requests = (
-                speech.StreamingRecognizeRequest(audio_content=content)
+                speech_v1p1beta1.StreamingRecognizeRequest(audio_content=content)
                 for content in audio_generator
             )
 
             responses = client.streaming_recognize(streaming_config, requests)
 
             # Now, put the transcription responses to use.
-            listen_print_loop(responses, stream)
+            listen_print_loop(responses, stream, new_connection_index)
 
             if stream.result_end_time > 0:
                 stream.final_request_end_time = stream.is_final_end_time
@@ -341,6 +371,6 @@ def main():
 
 if __name__ == "__main__":
 
-    main()
+    main(new_connection_index)
 
 # [END speech_transcribe_infinite_streaming]
